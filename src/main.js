@@ -9,11 +9,11 @@ import {
     loadCourseDisciplines,
     resetColor,
     resetAllColors,
-    setActiveCourse,
-    slotKey,
+    setActiveCourse
 } from './data.js';
 import { initGrid, renderGrid, setGridPreview } from './grid.js';
 import { initSidebar, renderDisciplineList } from './sidebar.js';
+import { escapeHtml } from './sanitize.js';
 
 /**
  * App state: list of selected turmas.
@@ -167,7 +167,7 @@ function renderSelectedChips() {
         chip.style.borderColor = color.border;
         chip.style.color = color.text;
         chip.innerHTML = `
-      <span>${sel.codigo} · T${sel.turma}</span>
+      <span>${escapeHtml(sel.codigo)} · T${escapeHtml(sel.turma)}</span>
       <span class="chip-remove">✕</span>
     `;
         chip.title = `${sel.nomeDisciplina}\nTurma ${sel.turma}\n${sel.professores.join(', ')}`;
@@ -182,26 +182,16 @@ function renderSelectedChips() {
 function updateInsights() {
     const metricDisciplines = document.getElementById('metric-disciplines');
     const metricSlots = document.getElementById('metric-slots');
-    const gridTip = document.getElementById('grid-tip');
-
-    const slotCounts = new Map();
     let totalSlots = 0;
 
     for (const sel of selectedTurmas) {
         for (const horario of sel.horarios) {
             totalSlots++;
-            const key = slotKey(horario);
-            slotCounts.set(key, (slotCounts.get(key) || 0) + 1);
         }
     }
 
-    const conflictSlots = Array.from(slotCounts.values()).filter((count) => count > 1).length;
-
     metricDisciplines.textContent = String(selectedTurmas.length);
     metricSlots.textContent = String(totalSlots);
-    gridTip.textContent = conflictSlots > 0
-        ? `Atenção: ${conflictSlots} conflito${conflictSlots === 1 ? '' : 's'} de horário.`
-        : 'Clique em um bloco para remover a turma.';
 }
 
 /**
@@ -310,8 +300,8 @@ async function init() {
     // Initial render
     updateUI();
 
-    // Load active course disciplines from Supabase and refresh the sidebar once ready.
-    await loadCourseDisciplines(getActiveCourse().id);
+    // Preload all courses so tab counters do not stay as "…" until each tab is opened.
+    await Promise.all(COURSES.map((course) => loadCourseDisciplines(course.id)));
     renderDisciplineList(getQuery());
 }
 

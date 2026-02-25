@@ -60,25 +60,41 @@
     <main id="main-content">
       <!-- Sidebar: discipline search & list -->
       <aside id="sidebar">
+        <div class="course-search-container">
+          <svg class="course-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input type="text" id="course-search-input" placeholder="Buscar curso... (Ctrl+K)" autocomplete="off" />
+          <button id="btn-clear-course-search" class="btn-clear-course-search" title="Limpar busca de curso"
+            style="display:none">&#10005;</button>
+        </div>
+        <div id="course-tabs" class="course-tabs">
+          <!-- Rendered by JS -->
+        </div>
         <div class="search-container">
           <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <input type="text" id="search-input" placeholder="Buscar disciplina ou código..." autocomplete="off" />
-          <button id="btn-clear-search" class="btn-clear-search" title="Limpar busca" style="display:none">&#10005;</button>
-        </div>
-        <div id="course-tabs" class="course-tabs">
-          <!-- Rendered by JS -->
+          <input type="text" id="search-input" placeholder="Buscar disciplina... (/)" autocomplete="off" />
+          <button id="btn-clear-search" class="btn-clear-search" title="Limpar busca"
+            style="display:none">&#10005;</button>
         </div>
         <div id="discipline-list" class="discipline-list"></div>
         <div class="sidebar-footer">
-          <div class="sidebar-footer-title">Dicas rápidas</div>
-          <div class="sidebar-footer-lines">
+          <button id="btn-toggle-quick-tips" class="sidebar-footer-toggle" aria-expanded="true"
+            aria-controls="quick-tips-lines" type="button">
+            <span class="sidebar-footer-title">Dicas rápidas</span>
+            <span class="sidebar-footer-toggle-icon" aria-hidden="true">▾</span>
+          </button>
+          <div id="quick-tips-lines" class="sidebar-footer-lines">
             <span>Clique em uma turma para selecionar/remover.</span>
             <span>Clique em um bloco da grade para remover a turma.</span>
             <span>Pressione <kbd>/</kbd> para focar a busca.</span>
+            <span>Pressione <kbd>Ctrl</kbd> + <kbd>K</kbd> para buscar curso.</span>
             <span>Na busca: <kbd>Ctrl</kbd> + <kbd>←/→</kbd> troca o curso.</span>
           </div>
         </div>
@@ -96,24 +112,16 @@
             <span id="metric-slots" class="metric-value">0</span>
           </div>
         </div>
-        <div id="selected-chips" class="selected-chips"></div>
-        <div class="grid-toolbar">
-          <div class="grid-legend">
-            <span class="legend-item"><span class="legend-dot legend-dot-selected"></span>Selecionada</span>
-            <span class="legend-item"><span class="legend-dot legend-dot-conflict"></span>Conflito</span>
-            <span class="legend-item"><span class="legend-dot legend-dot-empty"></span>Livre</span>
-          </div>
-          <div class="grid-toolbar-right">
-            <span id="grid-tip" class="grid-tip">Clique em um bloco para remover a turma.</span>
-            <button id="btn-clear-all" class="btn btn-ghost btn-clear-grid" title="Limpar tudo">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-              </svg>
-              Limpar grade
-            </button>
-          </div>
+        <div class="selected-chips-row">
+          <div id="selected-chips" class="selected-chips"></div>
+          <button id="btn-clear-all" class="btn btn-ghost btn-clear-grid" title="Limpar tudo">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+            </svg>
+            Limpar grade
+          </button>
         </div>
         <div class="grid-wrapper">
           <table id="schedule-grid" class="schedule-grid">

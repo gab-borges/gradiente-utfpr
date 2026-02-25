@@ -89,10 +89,11 @@ npm run preview
 │   └── style.css      # design system e layout responsivo
 ├── data/
 │   ├── courses.json       # catálogo de cursos (id, label, utfprCode, sampleHtml opcional)
-│   └── disciplinas_*.json # snapshots locais (debug/backup)
+│   └── disciplinas/
+│       └── *.json         # snapshots locais (debug/backup)
 ├── scripts/
-│   └── parse_disciplinas.py # parser de HTML local -> JSON
-├── fetch_disciplinas.py   # coleta na UTFPR e faz upsert no Supabase
+│   ├── parse_disciplinas.py # parser de HTML local -> JSON
+│   └── fetch_disciplinas.py # coleta na UTFPR e faz upsert no Supabase
 ├── sql/
 │   └── create_course_disciplines.sql # schema + políticas
 ├── media/                 # assets de mídia (logo/screenshot)
@@ -156,7 +157,7 @@ Exemplo:
 ### 4) Popular o banco com dados atuais da UTFPR
 
 ```bash
-python3 fetch_disciplinas.py
+python3 scripts/fetch_disciplinas.py
 ```
 
 Esse script:
@@ -164,7 +165,7 @@ Esse script:
 - lê `data/courses.json`
 - busca e faz parse dos horários da UTFPR
 - faz upsert em `public.course_disciplines` por `course_id`
-- mantém snapshot local em `data/disciplinas_<id>.json`
+- mantém snapshot local em `data/disciplinas/<id>.json`
 
 ### 5) Parse de HTML local (amostras) + upload opcional
 
@@ -174,7 +175,7 @@ python3 scripts/parse_disciplinas.py
 
 Esse script converte `sampleHtml` (ou `disciplinas_<id>.html`) e:
 
-- sempre gera `data/disciplinas_<id>.json`
+- sempre gera `data/disciplinas/<id>.json`
 - envia para Supabase quando `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` estiverem definidos
 
 ## Scripts disponíveis
@@ -186,5 +187,5 @@ Esse script converte `sampleHtml` (ou `disciplinas_<id>.html`) e:
 ## Observações
 
 - O favicon usa `public/media/gradiente_logo.jpg`.
-- O repositório ignora `data/disciplinas_*.json` e `*.html`; os snapshots são locais.
+- O repositório ignora `data/disciplinas/*.json` e `*.html`; os snapshots são locais.
 - Não há suíte de testes automatizados no momento.

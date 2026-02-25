@@ -37,7 +37,8 @@ export const COURSES = (Array.isArray(coursesConfig) ? coursesConfig : [])
         data: [],
         loadState: COURSE_LOAD_IDLE,
         loadError: '',
-    }));
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR', { sensitivity: 'base' }));
 
 const courseLoadPromises = new Map(); // courseId -> Promise<Array>
 

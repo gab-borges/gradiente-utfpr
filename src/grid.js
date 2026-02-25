@@ -2,6 +2,7 @@
  * Grid module — renders and manages the weekly schedule table.
  */
 import { DAYS, DAY_LABELS, SHIFTS, TIME_MAP, slotKey, getColorForDiscipline } from './data.js';
+import { escapeHtml } from './sanitize.js';
 
 /** @type {Map<string, {codigo: string, turma: string, sala: string, professores: string[]}>} */
 let occupiedSlots = new Map();
@@ -37,7 +38,7 @@ function renderPreviewSlots() {
 
         const previewEl = document.createElement('div');
         previewEl.className = `grid-preview-slot${hasConflict ? ' conflict' : ''}`;
-        previewEl.innerHTML = `<span class="slot-preview-code">${previewTurma.nomeDisciplina}</span>`;
+        previewEl.innerHTML = `<span class="slot-preview-code">${escapeHtml(previewTurma.nomeDisciplina)}</span>`;
 
         if (!hasConflict) {
             previewEl.style.background = color.bg;
@@ -158,10 +159,12 @@ export function renderGrid(selectedTurmas) {
                 : color.bg;
             slotEl.style.border = `1px solid ${isConflict ? '#fc5c7c' : color.border}`;
             slotEl.style.color = isConflict ? '#fda4af' : color.text;
+            const safeDisciplineName = escapeHtml(entry.nomeDisciplina);
+            const safeRoom = escapeHtml(entry.sala);
 
             slotEl.innerHTML = `
-        <span class="slot-code">${entry.nomeDisciplina}</span>
-        ${entry.sala ? `<span class="slot-room">${entry.sala}</span>` : ''}
+        <span class="slot-code">${safeDisciplineName}</span>
+        ${entry.sala ? `<span class="slot-room">${safeRoom}</span>` : ''}
       `;
 
             const professores = entry.professores.length > 0
