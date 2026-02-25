@@ -1,0 +1,37 @@
+[
+  {
+    "id": "computacao",
+    "label": "Eng. Computação",
+    "utfprCode": "24E94D0948FFF26325BC0F8134D01085"
+  },
+  {
+    "id": "eletrica",
+    "label": "Eng. Elétrica",
+    "utfprCode": "7EBF66F10F6A806CC41F8317125C5F2F"
+  },
+  {
+    "id": "administracao",
+    "label": "Administração",
+    "utfprCode": "ACB4A522B0C83D8A2A55DED21174B3E5"
+  },
+  {
+    "id": "design",
+    "label": "Design",
+    "utfprCode": "B2E16FAF8EDA193BDEE36592C5318E0D"
+  },
+  {
+    "id": "edfisica",
+    "label": "Ed. Física",
+    "utfprCode": "91CCF7FF29FAD9C536E53A3EA82A7918"
+  },
+  {
+    "id": "mecatronica",
+    "label": "Eng. Mecatrônica",
+    "utfprCode": "13CB22B2459F9B0508348E75E843A04C"
+  },
+  {
+    "id": "bsi",
+    "label": "Sist. De Informação",
+    "utfprCode": "953684D8F4D3B8CE3868C05FE9492849"
+  }
+]

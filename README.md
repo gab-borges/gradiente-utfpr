@@ -19,6 +19,7 @@ Aplicação web para montar grade de horários da UTFPR, com busca de disciplina
   - curso ativo
   - texto da busca
   - turmas selecionadas
+- Configuração centralizada de cursos em `data/courses.json` (frontend + scripts Python).
 
 ## Cursos disponíveis
 
@@ -83,8 +84,12 @@ npm run preview
 │   ├── grid.js        # grade semanal, conflitos e preview por hover
 │   ├── data.js        # datasets, busca e utilitários
 │   └── style.css      # design system e layout responsivo
+├── data/
+│   ├── courses.json       # catálogo de cursos (id, label, utfprCode, sampleHtml opcional)
+│   └── disciplinas_*.json # dados gerados/consumidos pelo frontend
+├── scripts/
+│   └── parse_disciplinas.py # parser de HTML local -> JSON
 ├── fetch_disciplinas.py   # coleta na UTFPR e gera JSON por curso
-├── parse_disciplinas.py   # parser de HTML local -> JSON
 ├── media/                 # assets de mídia (logo/screenshot)
 ├── public/                # assets estáticos servidos pelo Vite
 ├── index.html             # shell da aplicação
@@ -93,7 +98,27 @@ npm run preview
 
 ## Dados das disciplinas
 
-O app consome arquivos `src/disciplinas_*.json`.
+O app consome arquivos `data/disciplinas_*.json`.
+
+### Como adicionar um curso sem mexer no codigo
+
+Edite apenas `data/courses.json` e adicione um item com:
+
+- `id`: identificador usado no nome do JSON (`disciplinas_<id>.json`)
+- `label`: nome exibido na aba do frontend
+- `utfprCode`: codigo usado na URL da UTFPR
+- `sampleHtml` (opcional): nome do HTML local para `scripts/parse_disciplinas.py`
+
+Exemplo:
+
+```json
+{
+  "id": "mecanica",
+  "label": "Eng. Mecanica",
+  "utfprCode": "SEU_CODIGO_AQUI",
+  "sampleHtml": "disciplinas_mecanica.html"
+}
+```
 
 ### Opção 1: Coletar dados atuais da UTFPR
 
@@ -109,27 +134,29 @@ UTFPRSSO=seu_token_aqui
 python3 fetch_disciplinas.py
 ```
 
-Esse script gera/atualiza:
+Esse script le `data/courses.json` e gera/atualiza automaticamente:
 
-- `src/disciplinas_computacao.json`
-- `src/disciplinas_eletrica.json`
-- `src/disciplinas_administracao.json`
-- `src/disciplinas_design.json`
-- `src/disciplinas_edfisica.json`
-- `src/disciplinas_mecatronica.json`
+- `data/disciplinas_computacao.json`
+- `data/disciplinas_eletrica.json`
+- `data/disciplinas_administracao.json`
+- `data/disciplinas_design.json`
+- `data/disciplinas_edfisica.json`
+- `data/disciplinas_mecatronica.json`
 
 ### Opção 2: Parse de HTML local (amostras)
 
 Se você tiver HTMLs salvos localmente:
 
 ```bash
-python3 parse_disciplinas.py
+python3 scripts/parse_disciplinas.py
 ```
 
-No estado atual, esse script converte:
+Esse script le `data/courses.json` e tenta converter:
 
-- `disciplinas.html` -> `src/disciplinas_computacao.json`
-- `disciplinas_eletrica.html` -> `src/disciplinas_eletrica.json`
+- `sampleHtml` de cada curso (quando definido), ou
+- `disciplinas_<id>.html` (fallback)
+
+Saida: `data/disciplinas_<id>.json` para cada HTML encontrado.
 
 ## Scripts disponíveis
 
@@ -140,5 +167,5 @@ No estado atual, esse script converte:
 ## Observações
 
 - O favicon usa `public/media/gradiente_logo.jpg`.
-- O repositório ignora `src/*.json` e `*.html` no `.gitignore`; se necessário, gere os arquivos localmente.
+- O repositório ignora `data/disciplinas_*.json` e `*.html`; se necessário, gere os arquivos localmente.
 - Não há suíte de testes automatizados no momento.

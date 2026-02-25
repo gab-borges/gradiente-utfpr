@@ -1,36 +1,47 @@
 /**
  * Data layer — loads disciplines and provides search/conflict utilities.
  */
-import disciplinasComputacao from './disciplinas_computacao.json';
-import disciplinasEletrica from './disciplinas_eletrica.json';
-import disciplinasAdministracao from './disciplinas_administracao.json';
-import disciplinasDesign from './disciplinas_design.json';
-import disciplinasEdfisica from './disciplinas_edfisica.json';
-import disciplinasMecatronica from './disciplinas_mecatronica.json';
+import coursesConfig from '../data/courses.json';
+
+const disciplineModules = import.meta.glob('../data/disciplinas_*.json', { eager: true });
+
+function getDisciplinesForCourse(courseId) {
+    const modulePath = `../data/disciplinas_${courseId}.json`;
+    const moduleData = disciplineModules[modulePath];
+    if (!moduleData || !Array.isArray(moduleData.default)) return [];
+    return moduleData.default;
+}
 
 /** Course definitions */
-export const COURSES = [
-    { id: 'computacao', label: 'Eng. Computação', data: disciplinasComputacao },
-    { id: 'eletrica', label: 'Eng. Elétrica', data: disciplinasEletrica },
-    { id: 'administracao', label: 'Administração', data: disciplinasAdministracao },
-    { id: 'design', label: 'Design', data: disciplinasDesign },
-    { id: 'edfisica', label: 'Ed. Física', data: disciplinasEdfisica },
-    { id: 'mecatronica', label: 'Eng. Mecatrônica', data: disciplinasMecatronica },
-];
+export const COURSES = (Array.isArray(coursesConfig) ? coursesConfig : [])
+    .filter((course) =>
+        course &&
+        typeof course.id === 'string' &&
+        course.id &&
+        typeof course.label === 'string' &&
+        course.label
+    )
+    .map((course) => ({
+        id: course.id,
+        label: course.label,
+        data: getDisciplinesForCourse(course.id),
+    }));
 
 /** Current active course */
-let activeCourseId = 'computacao';
+const EMPTY_COURSE = { id: '', label: '', data: [] };
+let activeCourseId = COURSES[0]?.id || '';
 
 export function getActiveCourse() {
-    return COURSES.find((c) => c.id === activeCourseId);
+    return COURSES.find((c) => c.id === activeCourseId) || COURSES[0] || EMPTY_COURSE;
 }
 
 export function setActiveCourse(id) {
+    if (!COURSES.some((course) => course.id === id)) return;
     activeCourseId = id;
 }
 
 export function getActiveDisciplines() {
-    return getActiveCourse().data;
+    return getActiveCourse().data || [];
 }
 
 /** Day labels (Brazilian convention: 2=Seg, 3=Ter, ...) */

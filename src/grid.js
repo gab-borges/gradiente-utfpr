@@ -3,7 +3,7 @@
  */
 import { DAYS, DAY_LABELS, SHIFTS, TIME_MAP, slotKey, getColorForDiscipline } from './data.js';
 
-/** @type {Map<string, {codigo: string, turma: string, sala: string}>} */
+/** @type {Map<string, {codigo: string, turma: string, sala: string, professores: string[]}>} */
 let occupiedSlots = new Map();
 
 /** Callback when a grid slot is clicked */
@@ -135,6 +135,7 @@ export function renderGrid(selectedTurmas) {
                 nomeDisciplina: sel.nomeDisciplina,
                 turma: sel.turma,
                 sala: h.sala,
+                professores: Array.isArray(sel.professores) ? sel.professores : [],
             });
         }
     }
@@ -163,7 +164,10 @@ export function renderGrid(selectedTurmas) {
         ${entry.sala ? `<span class="slot-room">${entry.sala}</span>` : ''}
       `;
 
-            slotEl.title = `${entry.codigo} - ${entry.nomeDisciplina}\nTurma ${entry.turma}${entry.sala ? `\nSala: ${entry.sala}` : ''}${isConflict ? '\n⚠ CONFLITO!' : ''}`;
+            const professores = entry.professores.length > 0
+                ? entry.professores.join(', ')
+                : 'Professor não informado';
+            slotEl.title = `${entry.codigo} - ${entry.nomeDisciplina}\nTurma ${entry.turma}\nProfessor(es): ${professores}${entry.sala ? `\nSala: ${entry.sala}` : ''}${isConflict ? '\n⚠ CONFLITO!' : ''}`;
 
             slotEl.addEventListener('click', () => {
                 if (onSlotClick) onSlotClick(entry.codigo, entry.turma);

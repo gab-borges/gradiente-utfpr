@@ -10,18 +10,16 @@ import time
 
 import requests
 
-from parse_disciplinas import DisciplinaParser, extract_hours_info
+from scripts.parse_disciplinas import DisciplinaParser, extract_hours_info
 
 MAX_RETRIES = 3
 MIN_RESPONSE_SIZE = 5000  # responses under this are likely incomplete
-
-COURSES = [
-    ("computacao", "Eng. Computação", "24E94D0948FFF26325BC0F8134D01085"),
-    ("eletrica", "Eng. Elétrica", "7EBF66F10F6A806CC41F8317125C5F2F"),
-    ("administracao", "Administração", "ACB4A522B0C83D8A2A55DED21174B3E5"),
-    ("design", "Design", "B2E16FAF8EDA193BDEE36592C5318E0D"),
-    ("edfisica", "Educação Física", "91CCF7FF29FAD9C536E53A3EA82A7918"),
-]
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+COURSE_CONFIG_PATH = os.path.join(
+    DATA_DIR,
+    "courses.json",
+)
 
 BASE_URL = "https://sistemas2.utfpr.edu.br/dpls/sistema/aluno01/mpListaHorario.pcExibirTurmas"
 
@@ -43,7 +41,7 @@ HEADERS = {
 
 
 def load_token():
-    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    env_path = os.path.join(BASE_DIR, ".env")
     with open(env_path) as f:
         for line in f:
             line = line.strip()
@@ -51,6 +49,40 @@ def load_token():
                 return line.split("=", 1)[1]
     print("ERRO: UTFPRSSO não encontrado no .env")
     sys.exit(1)
+
+
+def load_courses_config():
+    try:
+        with open(COURSE_CONFIG_PATH, encoding="utf-8") as f:
+            courses = json.load(f)
+    except FileNotFoundError:
+        print(f"ERRO: arquivo de cursos não encontrado: {COURSE_CONFIG_PATH}")
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"ERRO: JSON inválido em {COURSE_CONFIG_PATH}: {e}")
+        sys.exit(1)
+
+    if not isinstance(courses, list):
+        print(f"ERRO: {COURSE_CONFIG_PATH} deve conter uma lista de cursos.")
+        sys.exit(1)
+
+    normalized = []
+    for course in courses:
+        if not isinstance(course, dict):
+            continue
+        slug = str(course.get("id", "")).strip()
+        name = str(course.get("label", "")).strip()
+        code = str(course.get("utfprCode", "")).strip()
+        if not slug or not name or not code:
+            continue
+        normalized.append((slug, name, code))
+
+    if not normalized:
+        print(f"ERRO: nenhum curso válido encontrado em {COURSE_CONFIG_PATH}.")
+        print("Cada curso precisa de: id, label, utfprCode.")
+        sys.exit(1)
+
+    return normalized
 
 
 def fetch_html(course_code, token):
@@ -95,11 +127,13 @@ def parse_html(html_content):
 
 
 def main():
+    courses = load_courses_config()
     token = load_token()
+    os.makedirs(DATA_DIR, exist_ok=True)
     print(f"Token carregado ({len(token)} chars)")
-    print(f"Buscando {len(COURSES)} cursos...\n")
+    print(f"Buscando {len(courses)} cursos...\n")
 
-    for slug, name, code in COURSES:
+    for slug, name, code in courses:
         print(f"  [{name}] Buscando...", end=" ", flush=True)
         try:
             html = fetch_html(code, token)
@@ -109,8 +143,7 @@ def main():
             total_turmas = sum(len(d["turmas"]) for d in disciplines)
 
             output_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "src",
+                DATA_DIR,
                 f"disciplinas_{slug}.json",
             )
             with open(output_path, "w", encoding="utf-8") as f:
