@@ -1,18 +1,83 @@
 [
   {
-    "id": "computacao",
-    "label": "Eng. Computação",
+    "id": "engind.eletronica",
+    "label": "Engenharia Industrial Eletrônica",
+    "utfprCode": "52D091D3DC8D436D40B9737F56759549"
+  },
+  {
+    "id": "engind.eletrotecn.",
+    "label": "Engenharia Industrial Eletrotécnica",
+    "utfprCode": "CF130B68917BC175CEAF29C978124D34"
+  },
+  {
+    "id": "engind.mecanica",
+    "label": "Engenharia Industrial Mecânica",
+    "utfprCode": "1EA98EA6E6BF4641051C2E71EC93A41F"
+  },
+  {
+    "id": "engprod.civil",
+    "label": "Engenharia de Produção Civil",
+    "utfprCode": "7106EC6E6FCAA3F50E74FEF796978FED"
+  },
+  {
+    "id": "alemao",
+    "label": "Alemão",
+    "utfprCode": "9B896F4E24B4F8CB2738FF1A14EE4D82"
+  },
+  {
+    "id": "espanhol",
+    "label": "Espanhol",
+    "utfprCode": "F04641AE6F19EC5B5519D82A3550E5D7"
+  },
+  {
+    "id": "frances",
+    "label": "Francês",
+    "utfprCode": "722267AC0DE9DDB5EE1EA26230A89CC3"
+  },
+  {
+    "id": "ingles",
+    "label": "Inglês",
+    "utfprCode": "6944CDABAA46F2F1EF4ED33100BDA8AC"
+  },
+  {
+    "id": "tecnol.emradiologia",
+    "label": "Tecnologia em Radiologia",
+    "utfprCode": "5A7EE5973C02377261BA7C5CD714074C"
+  },
+  {
+    "id": "tecnautomacaoind",
+    "label": "Tecnologia em Automação Industrial",
+    "utfprCode": "B58097FCF30693F54E2B0423679D6884"
+  },
+  {
+    "id": "tecnmecatronicaind",
+    "label": "Tecnologia em Mecatrônica Industrial",
+    "utfprCode": "D143E7D28F391F12AA0167F48B00C48E"
+  },
+  {
+    "id": "tecintmecanica",
+    "label": "Tecnologia em Mecânica",
+    "utfprCode": "737FAF48521DEA5AEC9C99F48C13E9FC"
+  },
+  {
+    "id": "tecintsegtrabalho",
+    "label": "Engenharia de Segurança do Trabalho",
+    "utfprCode": "20DA18B3C5639F823393C5C8CE0FDFFA"
+  },
+  {
+    "id": "tecinteletronica",
+    "label": "Tecnologia em Eletrônica",
+    "utfprCode": "3EC9F7905953E5856C3DF1C69A0D4B2A"
+  },
+  {
+    "id": "engindautomacao",
+    "label": "Engenharia Industrial de Automação",
+    "utfprCode": "E14289A05626AC688CAB47D73249FCEF"
+  },
+  {
+    "id": "engdecomputacao",
+    "label": "Engenharia de Computação",
     "utfprCode": "24E94D0948FFF26325BC0F8134D01085"
-  },
-  {
-    "id": "eletrica",
-    "label": "Eng. Elétrica",
-    "utfprCode": "7EBF66F10F6A806CC41F8317125C5F2F"
-  },
-  {
-    "id": "administracao",
-    "label": "Administração",
-    "utfprCode": "ACB4A522B0C83D8A2A55DED21174B3E5"
   },
   {
     "id": "design",
@@ -20,18 +85,133 @@
     "utfprCode": "B2E16FAF8EDA193BDEE36592C5318E0D"
   },
   {
-    "id": "edfisica",
-    "label": "Ed. Física",
+    "id": "educacaofisica",
+    "label": "Educação Física",
     "utfprCode": "91CCF7FF29FAD9C536E53A3EA82A7918"
   },
   {
-    "id": "mecatronica",
-    "label": "Eng. Mecatrônica",
+    "id": "tecnol.sist.telec.",
+    "label": "Tecnologia em Sistemas de Telecomunicações",
+    "utfprCode": "38C003158C9620B340745FCF63A0225B"
+  },
+  {
+    "id": "tecnolprocessosamb",
+    "label": "Tecnologia em Processos Ambientais",
+    "utfprCode": "4C12F79B655AB4DC7C3B20CDAEC29E05"
+  },
+  {
+    "id": "tecndesigngrafico",
+    "label": "Tecnologia em Design Gráfico",
+    "utfprCode": "896294C2804BC8DDFB146D792E207C0B"
+  },
+  {
+    "id": "tecn.comun.inst.",
+    "label": "Tecnologia em Comunicação Institucional",
+    "utfprCode": "13085F2ACEFE82B712E00A1BBDBCF390"
+  },
+  {
+    "id": "quimica",
+    "label": "Química",
+    "utfprCode": "0A3CFA0154402941AD6AAD1BE0D2B206"
+  },
+  {
+    "id": "licletras",
+    "label": "Licenciatura em Letras",
+    "utfprCode": "A62333EA2B89C9E83BFC86FEB658F705"
+  },
+  {
+    "id": "licfisica",
+    "label": "Licenciatura em Física",
+    "utfprCode": "43208A7CAAE765BDD31B2F8939EAD0C0"
+  },
+  {
+    "id": "sistdeinformacao",
+    "label": "Sistemas de Informação",
+    "utfprCode": "953684D8F4D3B8CE3868C05FE9492849"
+  },
+  {
+    "id": "arquiteteurbanismo",
+    "label": "Arquitetura E Urbanismo",
+    "utfprCode": "924828187CB67DF29938A659378D7FFB"
+  },
+  {
+    "id": "engeletronica",
+    "label": "Engenharia Eletrônica",
+    "utfprCode": "C973A7807E3F43E7D744BFDC318B28F7"
+  },
+  {
+    "id": "engeletrica",
+    "label": "Engenharia Elétrica",
+    "utfprCode": "7EBF66F10F6A806CC41F8317125C5F2F"
+  },
+  {
+    "id": "engcontrautomacao",
+    "label": "Engenharia de Controle e Automação",
+    "utfprCode": "A61242502C1D375442B59BF40B08743E"
+  },
+  {
+    "id": "engmecanica",
+    "label": "Engenharia Mecânica",
+    "utfprCode": "EEF2D2B5A07773BA8B622231F0AC5315"
+  },
+  {
+    "id": "engcivil",
+    "label": "Engenharia Civil",
+    "utfprCode": "2C8A9EA65AEF286CEA54E3A1A65D71E4"
+  },
+  {
+    "id": "licmatematica",
+    "label": "Licenciatura em Matemática",
+    "utfprCode": "BE6A5C24643181FBA5858AF3BF89D07C"
+  },
+  {
+    "id": "administracao",
+    "label": "Administração",
+    "utfprCode": "ACB4A522B0C83D8A2A55DED21174B3E5"
+  },
+  {
+    "id": "licquimica",
+    "label": "Licenciatura em Química",
+    "utfprCode": "6A61A691DA3ABEBE1CC5683BF0197045"
+  },
+  {
+    "id": "comunicorganizacional",
+    "label": "Comunicação Organizacional",
+    "utfprCode": "8ED4B1C95CF93393A33DDDEE27164AF7"
+  },
+  {
+    "id": "licletrasingles",
+    "label": "Licenciatura em Letras Inglês",
+    "utfprCode": "B064A608CAAD4B725B4AFEC410A0C5DB"
+  },
+  {
+    "id": "engmecatronica",
+    "label": "Engenharia Mecatrônica",
     "utfprCode": "13CB22B2459F9B0508348E75E843A04C"
   },
   {
-    "id": "bsi",
-    "label": "Sist. De Informação",
-    "utfprCode": "953684D8F4D3B8CE3868C05FE9492849"
+    "id": "licletrasportugues",
+    "label": "Licenciatura em Letras Português",
+    "utfprCode": "AB1EEEAEA349DB7BC2EEA580FF3A4BEC"
+  },
+  {
+    "id": "engambsanitaria",
+    "label": "Engenharia Ambiental e Sanitária",
+    "utfprCode": "F2B96153828F64E7639A24B9F97291BA"
+  },
+  {
+    "id": "quimicaambiental",
+    "label": "Química Ambiental",
+    "utfprCode": "DF181F0811031751DC826E49BF9A1270"
+  },
+  {
+    "id": "engdaproducao",
+    "label": "Engenharia de Produção",
+    "utfprCode": "DFDCBA34521860399F06C9AF2C534EDB"
+  },
+  {
+    "id": "licfisica9",
+    "label": "Licenciatura em Física",
+    "utfprCode": "0C4BB6EE7F1A702D15AC96670C5AAAB0"
   }
 ]

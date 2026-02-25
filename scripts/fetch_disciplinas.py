@@ -1,6 +1,6 @@
 """
 Fetch and parse UTFPR schedule pages for all courses.
-Usage: python3 fetch_disciplinas.py
+Usage: python3 scripts/fetch_disciplinas.py
 """
 
 import os
@@ -11,17 +11,22 @@ from datetime import datetime, timezone
 
 import requests
 
-from scripts.parse_disciplinas import DisciplinaParser, extract_hours_info
-
 MAX_RETRIES = 3
 MIN_RESPONSE_SIZE = 5000  # responses under this are likely incomplete
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
+ROOT_DIR = os.path.dirname(BASE_DIR)
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+from scripts.parse_disciplinas import DisciplinaParser, extract_hours_info
+
+DATA_DIR = os.path.join(ROOT_DIR, "data")
+DISCIPLINAS_DIR = os.path.join(DATA_DIR, "disciplinas")
 COURSE_CONFIG_PATH = os.path.join(
     DATA_DIR,
     "courses.json",
 )
-ENV_PATH = os.path.join(BASE_DIR, ".env")
+ENV_PATH = os.path.join(ROOT_DIR, ".env")
 SUPABASE_TABLE = "course_disciplines"
 
 BASE_URL = "https://sistemas2.utfpr.edu.br/dpls/sistema/aluno01/mpListaHorario.pcExibirTurmas"
@@ -70,7 +75,15 @@ def get_env_var(name, required=False):
 
 
 def load_token():
-    return get_env_var("UTFPRSSO", required=True)
+    token = get_env_var("UTFPRSSO", required=False)
+    if not token:
+        print("Aviso: Token UTFPRSSO não encontrado. Iniciando login headless...")
+        from scripts.get_token import get_utfprsso_token, update_env_token
+        user = get_env_var("UTFPR_ID", required=True)
+        pw = get_env_var("UTFPR_PASSWORD", required=True)
+        token = get_utfprsso_token(user, pw)
+        update_env_token(ENV_PATH, token)
+    return token
 
 
 def load_supabase_config():
@@ -124,9 +137,15 @@ def fetch_html(course_code, token):
         resp = requests.get(url, headers=headers, timeout=60)
 
         if resp.status_code in (401, 403):
-            print(f"\n  ERRO: Token expirado ou inválido (HTTP {resp.status_code}).")
-            print("  Pegue um novo token da sessão do navegador e atualize o .env.")
-            sys.exit(1)
+            print(f"\n  Aviso: Token expirado ou inválido (HTTP {resp.status_code}). Tentando renovar via headless login...")
+            from scripts.get_token import get_utfprsso_token, update_env_token
+            user = get_env_var("UTFPR_ID", required=True)
+            pw = get_env_var("UTFPR_PASSWORD", required=True)
+            new_token = get_utfprsso_token(user, pw)
+            update_env_token(ENV_PATH, new_token)
+            headers["Cookie"] = f"testcookie=abc; UTFPRSSO={new_token}; style=null; myFavCards=%5B%5D"
+            token = new_token
+            continue
 
         resp.raise_for_status()
         resp.encoding = "latin-1"
@@ -188,6 +207,7 @@ def main():
     token = load_token()
     supabase_url, supabase_service_role_key = load_supabase_config()
     os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(DISCIPLINAS_DIR, exist_ok=True)
     print(f"Token carregado ({len(token)} chars)")
     print(f"Buscando {len(courses)} cursos...\n")
 
@@ -201,8 +221,8 @@ def main():
             total_turmas = sum(len(d["turmas"]) for d in disciplines)
 
             output_path = os.path.join(
-                DATA_DIR,
-                f"disciplinas_{slug}.json",
+                DISCIPLINAS_DIR,
+                f"{slug}.json",
             )
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(disciplines, f, ensure_ascii=False, indent=2)

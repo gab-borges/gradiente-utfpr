@@ -14,6 +14,7 @@ import requests
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+DISCIPLINAS_DIR = os.path.join(DATA_DIR, "disciplinas")
 COURSE_CONFIG_PATH = os.path.join(DATA_DIR, "courses.json")
 ENV_PATH = os.path.join(PROJECT_ROOT, ".env")
 SUPABASE_TABLE = "course_disciplines"
@@ -171,6 +172,7 @@ def parse_file(html_path, output_path):
     """Parse a single HTML file and write JSON output."""
     html_abs_path = html_path if os.path.isabs(html_path) else os.path.join(PROJECT_ROOT, html_path)
     output_abs_path = output_path if os.path.isabs(output_path) else os.path.join(PROJECT_ROOT, output_path)
+    os.makedirs(os.path.dirname(output_abs_path), exist_ok=True)
 
     with open(html_abs_path, encoding="latin-1") as f:
         html = f.read()
@@ -292,7 +294,7 @@ def main():
             continue
 
         html_path = str(course.get("sampleHtml", "")).strip() or f"disciplinas_{slug}.html"
-        output_path = os.path.join("data", f"disciplinas_{slug}.json")
+        output_path = os.path.join("data", "disciplinas", f"{slug}.json")
         html_abs_path = html_path if os.path.isabs(html_path) else os.path.join(PROJECT_ROOT, html_path)
 
         if not os.path.exists(html_abs_path):

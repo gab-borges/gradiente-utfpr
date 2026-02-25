@@ -37,5 +37,5 @@ venv/
 # local tooling cache
 .cache/
 
-data/disciplinas_*.json
+data/disciplinas/*.json
 !data/courses.json
