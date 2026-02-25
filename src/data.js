@@ -6,6 +6,7 @@ import disciplinasEletrica from './disciplinas_eletrica.json';
 import disciplinasAdministracao from './disciplinas_administracao.json';
 import disciplinasDesign from './disciplinas_design.json';
 import disciplinasEdfisica from './disciplinas_edfisica.json';
+import disciplinasMecatronica from './disciplinas_mecatronica.json';
 
 /** Course definitions */
 export const COURSES = [
@@ -14,6 +15,7 @@ export const COURSES = [
     { id: 'administracao', label: 'Administração', data: disciplinasAdministracao },
     { id: 'design', label: 'Design', data: disciplinasDesign },
     { id: 'edfisica', label: 'Ed. Física', data: disciplinasEdfisica },
+    { id: 'mecatronica', label: 'Eng. Mecatrônica', data: disciplinasMecatronica },
 ];
 
 /** Current active course */
@@ -137,18 +139,18 @@ const COLORS_DARK = [
 ];
 
 const COLORS_LIGHT = [
-    { bg: 'rgba(91, 75, 212, 0.12)', border: '#5b4bd4', text: '#4338ca' },
-    { bg: 'rgba(74, 125, 212, 0.12)', border: '#4a7dd4', text: '#1d4ed8' },
-    { bg: 'rgba(25, 135, 84, 0.12)', border: '#198754', text: '#166534' },
-    { bg: 'rgba(220, 53, 69, 0.10)', border: '#dc3545', text: '#be123c' },
-    { bg: 'rgba(230, 126, 34, 0.10)', border: '#e67e22', text: '#c2410c' },
-    { bg: 'rgba(147, 51, 234, 0.12)', border: '#9333ea', text: '#7e22ce' },
-    { bg: 'rgba(6, 182, 212, 0.12)', border: '#06b6d4', text: '#0e7490' },
-    { bg: 'rgba(234, 88, 12, 0.10)', border: '#ea580c', text: '#c2410c' },
-    { bg: 'rgba(101, 163, 13, 0.12)', border: '#65a30d', text: '#4d7c0f' },
-    { bg: 'rgba(217, 70, 239, 0.12)', border: '#d946ef', text: '#a21caf' },
-    { bg: 'rgba(79, 70, 229, 0.12)', border: '#4f46e5', text: '#4338ca' },
-    { bg: 'rgba(202, 138, 4, 0.12)', border: '#ca8a04', text: '#a16207' },
+    { bg: 'rgba(91, 75, 212, 0.24)', border: '#5b4bd4', text: '#4338ca' },
+    { bg: 'rgba(74, 125, 212, 0.24)', border: '#4a7dd4', text: '#1d4ed8' },
+    { bg: 'rgba(25, 135, 84, 0.24)', border: '#198754', text: '#166534' },
+    { bg: 'rgba(220, 53, 69, 0.22)', border: '#dc3545', text: '#be123c' },
+    { bg: 'rgba(230, 126, 34, 0.22)', border: '#e67e22', text: '#c2410c' },
+    { bg: 'rgba(147, 51, 234, 0.24)', border: '#9333ea', text: '#7e22ce' },
+    { bg: 'rgba(6, 182, 212, 0.24)', border: '#06b6d4', text: '#0e7490' },
+    { bg: 'rgba(234, 88, 12, 0.22)', border: '#ea580c', text: '#c2410c' },
+    { bg: 'rgba(101, 163, 13, 0.24)', border: '#65a30d', text: '#4d7c0f' },
+    { bg: 'rgba(217, 70, 239, 0.24)', border: '#d946ef', text: '#a21caf' },
+    { bg: 'rgba(79, 70, 229, 0.24)', border: '#4f46e5', text: '#4338ca' },
+    { bg: 'rgba(202, 138, 4, 0.24)', border: '#ca8a04', text: '#a16207' },
 ];
 
 function getCurrentPalette() {

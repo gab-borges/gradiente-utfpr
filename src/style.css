@@ -26,11 +26,11 @@
   --text-secondary: #9494ad;
   --text-muted: #5c5c75;
 
-  --accent-1: #6d5cfc;
-  --accent-2: #5a8ff0;
-  --accent-gradient: linear-gradient(135deg, #6d5cfc, #5a8ff0);
-  --accent-glow: rgba(109, 92, 252, 0.15);
-  --accent-subtle: rgba(109, 92, 252, 0.10);
+  --accent-1: #43d7d0;
+  --accent-2: #1f66c7;
+  --accent-gradient: linear-gradient(135deg, #43d7d0 0%, #2fa9cf 55%, #1f66c7 100%);
+  --accent-glow: rgba(47, 169, 207, 0.2);
+  --accent-subtle: rgba(47, 169, 207, 0.12);
 
   --danger: #f06070;
   --danger-bg: rgba(240, 96, 112, 0.10);
@@ -50,6 +50,7 @@
   /* Layout */
   --header-height: 60px;
   --sidebar-width: 420px;
+  --grid-row-height: 46px;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
@@ -77,11 +78,11 @@
   --text-secondary: #5c5c75;
   --text-muted: #9494ad;
 
-  --accent-1: #5b4bd4;
-  --accent-2: #4a7dd4;
-  --accent-gradient: linear-gradient(135deg, #5b4bd4, #4a7dd4);
-  --accent-glow: rgba(91, 75, 212, 0.12);
-  --accent-subtle: rgba(91, 75, 212, 0.06);
+  --accent-1: #2fa9cf;
+  --accent-2: #1f66c7;
+  --accent-gradient: linear-gradient(135deg, #43d7d0 0%, #2fa9cf 55%, #1f66c7 100%);
+  --accent-glow: rgba(47, 169, 207, 0.15);
+  --accent-subtle: rgba(47, 169, 207, 0.08);
 
   --danger: #dc3545;
   --danger-bg: rgba(220, 53, 69, 0.08);
@@ -147,26 +148,51 @@ body {
 }
 
 .logo {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-weight: 800;
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   letter-spacing: -0.02em;
 }
 
 .logo-icon {
-  font-size: 1.1rem;
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--border-default);
 }
 
 .header-subtitle {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(47, 169, 207, 0.35);
+  background: linear-gradient(135deg, rgba(67, 215, 208, 0.14), rgba(31, 102, 199, 0.16));
+  color: #7fd4e4;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.header-subtitle::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent-1);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+[data-theme="light"] .header-subtitle {
+  color: #135a8e;
+  border-color: rgba(31, 102, 199, 0.28);
+  background: linear-gradient(135deg, rgba(67, 215, 208, 0.16), rgba(31, 102, 199, 0.12));
 }
 
 .header-right {
@@ -224,16 +250,6 @@ body {
 
 [data-theme="light"] .icon-sun {
   display: none;
-}
-
-.badge {
-  background: var(--bg-card);
-  border: 1px solid var(--border-default);
-  color: var(--text-secondary);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
 }
 
 kbd {
@@ -361,6 +377,14 @@ kbd {
   background: var(--bg-card);
 }
 
+.course-tab:focus-visible {
+  outline: none;
+  color: var(--text-primary);
+  border-color: var(--accent-2);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
 .course-tab.active {
   background: var(--bg-card);
   border-color: var(--border-default);
@@ -459,6 +483,11 @@ kbd {
   background: var(--bg-card-hover);
 }
 
+.discipline-header.kbd-active {
+  background: var(--bg-card-hover);
+  box-shadow: inset 0 0 0 1px var(--accent-2), 0 0 0 2px var(--accent-glow);
+}
+
 .discipline-card.expanded {
   border-color: var(--border-default);
   background: var(--bg-card);
@@ -529,6 +558,10 @@ kbd {
 .turma-item:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-subtle);
+}
+
+.turma-item.kbd-active {
+  box-shadow: inset 0 0 0 1px var(--accent-2), 0 0 0 2px var(--accent-glow);
 }
 
 .turma-item.selected {
@@ -705,6 +738,23 @@ kbd {
   gap: 12px;
 }
 
+.grid-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-clear-grid {
+  padding: 5px 10px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-card);
+}
+
+.btn-clear-grid:hover {
+  border-color: var(--accent-2);
+  color: var(--text-primary);
+}
+
 .grid-legend {
   display: flex;
   align-items: center;
@@ -786,7 +836,7 @@ kbd {
 
 .schedule-grid td {
   padding: 0;
-  height: 38px;
+  height: var(--grid-row-height);
   border: 1px solid var(--grid-cell-border);
   vertical-align: middle;
   position: relative;
@@ -848,9 +898,17 @@ kbd {
 }
 
 .grid-slot .slot-code {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+  word-break: break-word;
+  max-width: 100%;
+  padding: 0 3px;
 }
 
 .grid-slot .slot-room {
@@ -861,6 +919,39 @@ kbd {
 
 .grid-slot.conflict-slot {
   animation: conflictPulse 600ms var(--ease);
+}
+
+.grid-preview-slot {
+  position: absolute;
+  inset: 2px;
+  border-radius: 4px;
+  border: 1px dashed var(--accent-2);
+  background: var(--accent-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.grid-preview-slot.conflict {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.slot-preview-code {
+  font-size: 0.64rem;
+  font-weight: 700;
+  line-height: 1.2;
+  max-width: 100%;
+  padding: 0 2px;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 @keyframes slotIn {
@@ -938,6 +1029,7 @@ kbd {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+
   :root,
   [data-theme="dark"],
   [data-theme="light"] {
@@ -967,16 +1059,21 @@ kbd {
   }
 
   .schedule-grid td {
-    height: 32px;
+    height: 36px;
   }
 
   .grid-slot .slot-code {
-    font-size: 0.6rem;
+    font-size: 0.64rem;
   }
 
   .grid-toolbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .grid-toolbar-right {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .grid-tip {

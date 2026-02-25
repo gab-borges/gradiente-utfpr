@@ -2,8 +2,16 @@
  * Main entry point — wires up state, events, and modules.
  */
 import './style.css';
-import { getColorForDiscipline, resetColor, resetAllColors, slotKey } from './data.js';
-import { initGrid, renderGrid } from './grid.js';
+import {
+    COURSES,
+    getActiveCourse,
+    getColorForDiscipline,
+    resetColor,
+    resetAllColors,
+    setActiveCourse,
+    slotKey,
+} from './data.js';
+import { initGrid, renderGrid, setGridPreview } from './grid.js';
 import { initSidebar, renderDisciplineList } from './sidebar.js';
 
 /**
@@ -11,6 +19,50 @@ import { initSidebar, renderDisciplineList } from './sidebar.js';
  * Each entry: { codigo, nomeDisciplina, turma, horarios, professores }
  */
 const selectedTurmas = [];
+const APP_STATE_KEY = 'gradiente-app-state-v1';
+
+function saveAppState() {
+    try {
+        const state = {
+            selectedTurmas,
+            activeCourseId: getActiveCourse()?.id || 'computacao',
+            searchQuery: getQuery(),
+        };
+        localStorage.setItem(APP_STATE_KEY, JSON.stringify(state));
+    } catch {
+        // Ignore storage errors (private mode/quota)
+    }
+}
+
+function loadAppState() {
+    try {
+        const raw = localStorage.getItem(APP_STATE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch {
+        return null;
+    }
+}
+
+function restoreSelectedTurmas(items) {
+    if (!Array.isArray(items)) return;
+    selectedTurmas.length = 0;
+
+    for (const item of items) {
+        if (!item || typeof item !== 'object') continue;
+        if (item.codigo == null || item.nomeDisciplina == null || item.turma == null) continue;
+        if (!Array.isArray(item.horarios)) continue;
+        if (typeof item.turma !== 'string' && typeof item.turma !== 'number') continue;
+
+        selectedTurmas.push({
+            codigo: String(item.codigo),
+            nomeDisciplina: String(item.nomeDisciplina),
+            turma: item.turma,
+            horarios: item.horarios,
+            professores: Array.isArray(item.professores) ? item.professores : [],
+        });
+    }
+}
 
 /** Get the current search query */
 function getQuery() {
@@ -86,9 +138,9 @@ function updateUI() {
     renderGrid(selectedTurmas);
     renderDisciplineList(getQuery());
     renderSelectedChips();
-    updateSelectedCount();
     updateInsights();
     updateFooterTimestamp();
+    saveAppState();
 }
 
 /**
@@ -121,15 +173,6 @@ function renderSelectedChips() {
         chip.addEventListener('click', () => removeTurma(sel.codigo, sel.turma));
         container.appendChild(chip);
     }
-}
-
-/**
- * Update the selected count badge.
- */
-function updateSelectedCount() {
-    const badge = document.getElementById('selected-count');
-    const count = selectedTurmas.length;
-    badge.textContent = `${count} selecionada${count !== 1 ? 's' : ''}`;
 }
 
 /**
@@ -215,6 +258,13 @@ function initKeyboardShortcuts() {
  * Initialize the app.
  */
 function init() {
+    const persistedState = loadAppState();
+    const savedCourseId = persistedState?.activeCourseId;
+    if (typeof savedCourseId === 'string' && COURSES.some((course) => course.id === savedCourseId)) {
+        setActiveCourse(savedCourseId);
+    }
+    restoreSelectedTurmas(persistedState?.selectedTurmas);
+
     // Init theme toggle
     initThemeToggle();
     initKeyboardShortcuts();
@@ -231,8 +281,26 @@ function init() {
         onTabChange: () => {
             // Grid persists — just re-render the sidebar list
             renderDisciplineList('');
+            saveAppState();
+        },
+        onHover: (discipline, turma) => {
+            setGridPreview(discipline, turma);
         },
     });
+
+    const searchInput = document.getElementById('search-input');
+    const clearSearchBtn = document.getElementById('btn-clear-search');
+    searchInput.addEventListener('input', saveAppState);
+    clearSearchBtn.addEventListener('click', saveAppState);
+
+    const savedQuery = typeof persistedState?.searchQuery === 'string'
+        ? persistedState.searchQuery
+        : '';
+    if (savedQuery) {
+        searchInput.value = savedQuery;
+        clearSearchBtn.style.display = 'block';
+        renderDisciplineList(savedQuery);
+    }
 
     // Clear all button
     document.getElementById('btn-clear-all').addEventListener('click', clearAll);

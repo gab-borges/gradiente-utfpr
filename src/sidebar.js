@@ -14,14 +14,200 @@ import {
 let onTurmaToggle = null;
 let getSelectedTurmas = null;
 let onCourseChange = null;
+let onTurmaHover = null;
+const expandedDisciplines = new Set();
+const sidebarNavMeta = new Map();
+let activeSidebarKey = null;
+
+function getCourseTabButtons() {
+    return Array.from(document.querySelectorAll('#course-tabs .course-tab'));
+}
+
+function switchCourseByOffset(offset, { focusTarget = 'none' } = {}) {
+    const tabs = getCourseTabButtons();
+    if (tabs.length === 0) return;
+
+    const activeId = getActiveCourse().id;
+    const activeIndex = tabs.findIndex((tab) => tab.dataset.courseId === activeId);
+    const baseIndex = activeIndex >= 0 ? activeIndex : 0;
+    const nextIndex = (baseIndex + offset + tabs.length) % tabs.length;
+    const targetTab = tabs[nextIndex];
+    const targetCourseId = targetTab?.dataset.courseId;
+
+    if (!targetCourseId || targetCourseId === activeId) return;
+    targetTab.click();
+
+    requestAnimationFrame(() => {
+        const nextTab = document.querySelector(
+            `#course-tabs .course-tab[data-course-id="${targetCourseId}"]`
+        );
+        nextTab?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+
+        if (focusTarget === 'search') {
+            document.getElementById('search-input')?.focus();
+            return;
+        }
+
+        if (focusTarget === 'tab') {
+            nextTab?.focus();
+        }
+    });
+}
+
+function getVisibleSidebarItems() {
+    const container = document.getElementById('discipline-list');
+    if (!container) return [];
+    return Array.from(
+        container.querySelectorAll('.discipline-header, .turma-item')
+    ).filter((el) => el.offsetParent !== null);
+}
+
+function clearActiveSidebarClass() {
+    const container = document.getElementById('discipline-list');
+    if (!container) return;
+    const current = container.querySelector('.kbd-active');
+    if (current) current.classList.remove('kbd-active');
+}
+
+function setActiveSidebarItem(item) {
+    clearActiveSidebarClass();
+
+    if (!item) {
+        activeSidebarKey = null;
+        if (onTurmaHover) onTurmaHover(null, null);
+        return;
+    }
+
+    item.classList.add('kbd-active');
+    item.scrollIntoView({ block: 'nearest' });
+    activeSidebarKey = item.dataset.navKey || null;
+
+    const meta = activeSidebarKey ? sidebarNavMeta.get(activeSidebarKey) : null;
+    if (!onTurmaHover) return;
+    if (meta?.type === 'turma') {
+        onTurmaHover(meta.disc, meta.turma);
+    } else {
+        onTurmaHover(null, null);
+    }
+}
+
+function moveSidebarSelection(delta) {
+    const items = getVisibleSidebarItems();
+    if (items.length === 0) {
+        setActiveSidebarItem(null);
+        return;
+    }
+
+    let currentIndex = items.findIndex((el) => el.dataset.navKey === activeSidebarKey);
+    if (currentIndex === -1) {
+        currentIndex = delta > 0 ? -1 : items.length;
+    }
+
+    const nextIndex = Math.max(0, Math.min(items.length - 1, currentIndex + delta));
+    setActiveSidebarItem(items[nextIndex]);
+}
+
+function moveToDisciplineHeader(item) {
+    const card = item.closest('.discipline-card');
+    if (!card) return;
+    const header = card.querySelector('.discipline-header');
+    if (header) setActiveSidebarItem(header);
+}
+
+function moveToFirstTurma(item) {
+    const card = item.closest('.discipline-card');
+    if (!card) return;
+    const firstTurma = Array.from(card.querySelectorAll('.turma-item')).find(
+        (el) => el.offsetParent !== null
+    );
+    if (firstTurma) setActiveSidebarItem(firstTurma);
+}
+
+function activateCurrentSidebarItem() {
+    const items = getVisibleSidebarItems();
+    if (items.length === 0) return;
+
+    const current = items.find((el) => el.dataset.navKey === activeSidebarKey) || items[0];
+    current.click();
+}
+
+function handleSearchKeyboardNavigation(event) {
+    const wantsCourseNav = event.ctrlKey || event.metaKey || event.altKey;
+    if (wantsCourseNav && event.key === 'ArrowRight') {
+        event.preventDefault();
+        switchCourseByOffset(1, { focusTarget: 'search' });
+        return;
+    }
+
+    if (wantsCourseNav && event.key === 'ArrowLeft') {
+        event.preventDefault();
+        switchCourseByOffset(-1, { focusTarget: 'search' });
+        return;
+    }
+
+    const navKeys = ['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Enter'];
+    if (!navKeys.includes(event.key)) return;
+
+    const items = getVisibleSidebarItems();
+    if (items.length === 0) return;
+
+    if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        moveSidebarSelection(1);
+        return;
+    }
+
+    if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        moveSidebarSelection(-1);
+        return;
+    }
+
+    const current = items.find((el) => el.dataset.navKey === activeSidebarKey) || items[0];
+
+    if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        if (current.classList.contains('discipline-header')) {
+            const card = current.closest('.discipline-card');
+            if (card && !card.classList.contains('expanded')) {
+                current.click();
+            }
+            moveToFirstTurma(current);
+        }
+        return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        if (current.classList.contains('turma-item')) {
+            moveToDisciplineHeader(current);
+            return;
+        }
+
+        if (current.classList.contains('discipline-header')) {
+            const card = current.closest('.discipline-card');
+            if (card && card.classList.contains('expanded')) {
+                current.click();
+                setActiveSidebarItem(current);
+            }
+        }
+        return;
+    }
+
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        activateCurrentSidebarItem();
+    }
+}
 
 /**
  * Initialize the sidebar.
  */
-export function initSidebar({ onToggle, getSelected, onTabChange }) {
+export function initSidebar({ onToggle, getSelected, onTabChange, onHover }) {
     onTurmaToggle = onToggle;
     getSelectedTurmas = getSelected;
     onCourseChange = onTabChange;
+    onTurmaHover = onHover;
 
     const searchInput = document.getElementById('search-input');
     const clearBtn = document.getElementById('btn-clear-search');
@@ -30,6 +216,10 @@ export function initSidebar({ onToggle, getSelected, onTabChange }) {
         const query = searchInput.value;
         clearBtn.style.display = query ? 'block' : 'none';
         renderDisciplineList(query);
+    });
+    searchInput.addEventListener('keydown', handleSearchKeyboardNavigation);
+    searchInput.addEventListener('blur', () => {
+        setActiveSidebarItem(null);
     });
 
     clearBtn.addEventListener('click', () => {
@@ -64,6 +254,7 @@ function renderCourseTabs() {
         tab.addEventListener('click', () => {
             if (course.id === getActiveCourse().id) return;
             setActiveCourse(course.id);
+            expandedDisciplines.clear();
             renderCourseTabs();
 
             // Clear search on tab switch
@@ -76,6 +267,19 @@ function renderCourseTabs() {
             if (onCourseChange) onCourseChange(course.id);
         });
 
+        tab.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                switchCourseByOffset(1, { focusTarget: 'tab' });
+                return;
+            }
+
+            if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                switchCourseByOffset(-1, { focusTarget: 'tab' });
+            }
+        });
+
         container.appendChild(tab);
     }
 }
@@ -86,6 +290,9 @@ function renderCourseTabs() {
 export function renderDisciplineList(query) {
     const container = document.getElementById('discipline-list');
     const results = searchDisciplines(query);
+    const previousActiveKey = activeSidebarKey;
+    sidebarNavMeta.clear();
+    if (onTurmaHover) onTurmaHover(null, null);
 
     if (results.length === 0) {
         container.innerHTML = `
@@ -94,6 +301,7 @@ export function renderDisciplineList(query) {
         <div class="no-results-text">Nenhuma disciplina encontrada</div>
       </div>
     `;
+        activeSidebarKey = null;
         return;
     }
 
@@ -106,6 +314,9 @@ export function renderDisciplineList(query) {
     for (const disc of results) {
         const card = document.createElement('div');
         card.className = 'discipline-card';
+        if (expandedDisciplines.has(disc.codigo)) {
+            card.classList.add('expanded');
+        }
 
         // Check if any turma of this discipline is selected
         const hasSelected = disc.turmas.some((t) =>
@@ -116,6 +327,8 @@ export function renderDisciplineList(query) {
         // Header
         const header = document.createElement('div');
         header.className = 'discipline-header';
+        header.dataset.navKey = `disc:${disc.codigo}`;
+        sidebarNavMeta.set(header.dataset.navKey, { type: 'disc', disc });
         header.innerHTML = `
       <span class="disc-code">${disc.codigo}</span>
       <span class="disc-name" title="${disc.nome}">${disc.nome}</span>
@@ -125,6 +338,11 @@ export function renderDisciplineList(query) {
 
         header.addEventListener('click', () => {
             card.classList.toggle('expanded');
+            if (card.classList.contains('expanded')) {
+                expandedDisciplines.add(disc.codigo);
+            } else {
+                expandedDisciplines.delete(disc.codigo);
+            }
         });
 
         card.appendChild(header);
@@ -141,6 +359,8 @@ export function renderDisciplineList(query) {
             const item = document.createElement('div');
             item.className = `turma-item${isSelected ? ' selected' : ''}${hasConflict ? ' conflict' : ''}`;
             item.dataset.key = turmaKey;
+            item.dataset.navKey = `turma:${turmaKey}`;
+            sidebarNavMeta.set(item.dataset.navKey, { type: 'turma', disc, turma });
 
             const scheduleStr = formatTurmaSchedule(turma);
             const profStr = turma.professores.join(', ') || 'Professor não definido';
@@ -162,9 +382,18 @@ export function renderDisciplineList(query) {
             }
 
             item.addEventListener('click', () => {
+                expandedDisciplines.add(disc.codigo);
                 if (onTurmaToggle) {
                     onTurmaToggle(disc, turma);
                 }
+            });
+
+            item.addEventListener('mouseenter', () => {
+                if (onTurmaHover) onTurmaHover(disc, turma);
+            });
+
+            item.addEventListener('mouseleave', () => {
+                if (onTurmaHover) onTurmaHover(null, null);
             });
 
             turmaListEl.appendChild(item);
@@ -172,6 +401,17 @@ export function renderDisciplineList(query) {
 
         card.appendChild(turmaListEl);
         container.appendChild(card);
+    }
+
+    if (!previousActiveKey) return;
+
+    const itemToRestore = getVisibleSidebarItems().find(
+        (el) => el.dataset.navKey === previousActiveKey
+    );
+    if (itemToRestore) {
+        setActiveSidebarItem(itemToRestore);
+    } else {
+        activeSidebarKey = null;
     }
 }
 

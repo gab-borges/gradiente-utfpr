@@ -8,6 +8,47 @@ let occupiedSlots = new Map();
 
 /** Callback when a grid slot is clicked */
 let onSlotClick = null;
+let previewTurma = null;
+
+function clearPreviewSlots() {
+    const previews = document.querySelectorAll('.grid-preview-slot');
+    previews.forEach((node) => node.remove());
+}
+
+function renderPreviewSlots() {
+    clearPreviewSlots();
+    if (!previewTurma) return;
+
+    const color = getColorForDiscipline(previewTurma.codigo);
+
+    for (const h of previewTurma.horarios) {
+        const key = slotKey(h);
+        const [dia, turno, aula] = key.split('-');
+        const cell = document.getElementById(`cell-${dia}-${turno}-${aula}`);
+        if (!cell) continue;
+
+        const entries = occupiedSlots.get(key) || [];
+        const alreadyPlaced = entries.some(
+            (entry) => entry.codigo === previewTurma.codigo && entry.turma === previewTurma.turma
+        );
+        if (alreadyPlaced) continue;
+
+        const hasConflict = entries.some((entry) => entry.codigo !== previewTurma.codigo);
+
+        const previewEl = document.createElement('div');
+        previewEl.className = `grid-preview-slot${hasConflict ? ' conflict' : ''}`;
+        previewEl.innerHTML = `<span class="slot-preview-code">${previewTurma.nomeDisciplina}</span>`;
+
+        if (!hasConflict) {
+            previewEl.style.background = color.bg;
+            previewEl.style.borderColor = color.border;
+            previewEl.style.color = color.text;
+        }
+
+        previewEl.title = `Preview: ${previewTurma.codigo} - Turma ${previewTurma.turma}`;
+        cell.appendChild(previewEl);
+    }
+}
 
 /**
  * Initialize the schedule grid table.
@@ -143,6 +184,28 @@ export function renderGrid(selectedTurmas) {
 
         occupiedSlots.set(key, entries);
     }
+
+    renderPreviewSlots();
+}
+
+/**
+ * Set or clear temporary preview slots from sidebar hover.
+ */
+export function setGridPreview(discipline, turma) {
+    if (!discipline || !turma) {
+        previewTurma = null;
+        clearPreviewSlots();
+        return;
+    }
+
+    previewTurma = {
+        codigo: discipline.codigo,
+        nomeDisciplina: discipline.nome,
+        turma: turma.turma,
+        horarios: turma.horarios,
+    };
+
+    renderPreviewSlots();
 }
 
 /**
