@@ -126,9 +126,26 @@ function updateSelectedCount() {
 }
 
 /**
+ * Initialize theme toggle.
+ */
+function initThemeToggle() {
+    const btn = document.getElementById('btn-theme-toggle');
+    btn.addEventListener('click', () => {
+        const current = document.documentElement.dataset.theme;
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        localStorage.setItem('gradiente-theme', next);
+        updateUI();
+    });
+}
+
+/**
  * Initialize the app.
  */
 function init() {
+    // Init theme toggle
+    initThemeToggle();
+
     // Init grid
     initGrid((codigo, turma) => {
         removeTurma(codigo, turma);

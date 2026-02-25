@@ -3,11 +3,17 @@
  */
 import disciplinasComputacao from './disciplinas_computacao.json';
 import disciplinasEletrica from './disciplinas_eletrica.json';
+import disciplinasAdministracao from './disciplinas_administracao.json';
+import disciplinasDesign from './disciplinas_design.json';
+import disciplinasEdfisica from './disciplinas_edfisica.json';
 
 /** Course definitions */
 export const COURSES = [
     { id: 'computacao', label: 'Eng. Computação', data: disciplinasComputacao },
     { id: 'eletrica', label: 'Eng. Elétrica', data: disciplinasEletrica },
+    { id: 'administracao', label: 'Administração', data: disciplinasAdministracao },
+    { id: 'design', label: 'Design', data: disciplinasDesign },
+    { id: 'edfisica', label: 'Ed. Física', data: disciplinasEdfisica },
 ];
 
 /** Current active course */
@@ -113,39 +119,58 @@ export function formatTurmaSchedule(turma) {
 }
 
 /**
- * Color palette for selected disciplines
+ * Color palettes for selected disciplines (dark & light themes)
  */
-const COLORS = [
-    { bg: 'rgba(124, 92, 252, 0.25)', border: '#7c5cfc', text: '#c4b5fd' },
-    { bg: 'rgba(92, 156, 252, 0.25)', border: '#5c9cfc', text: '#93c5fd' },
-    { bg: 'rgba(92, 252, 188, 0.25)', border: '#5cfcbc', text: '#6ee7b7' },
-    { bg: 'rgba(252, 92, 124, 0.25)', border: '#fc5c7c', text: '#fda4af' },
-    { bg: 'rgba(252, 188, 92, 0.25)', border: '#fcbc5c', text: '#fcd34d' },
-    { bg: 'rgba(196, 92, 252, 0.25)', border: '#c45cfc', text: '#d8b4fe' },
-    { bg: 'rgba(92, 252, 240, 0.25)', border: '#5cfcf0', text: '#67e8f9' },
-    { bg: 'rgba(252, 140, 92, 0.25)', border: '#fc8c5c', text: '#fdba74' },
-    { bg: 'rgba(140, 252, 92, 0.25)', border: '#8cfc5c', text: '#a3e635' },
-    { bg: 'rgba(252, 92, 240, 0.25)', border: '#fc5cf0', text: '#f0abfc' },
-    { bg: 'rgba(92, 124, 252, 0.25)', border: '#5c7cfc', text: '#a5b4fc' },
-    { bg: 'rgba(252, 252, 92, 0.25)', border: '#fcfc5c', text: '#fde047' },
+const COLORS_DARK = [
+    { bg: 'rgba(109, 92, 252, 0.20)', border: '#7c6cfc', text: '#c4b5fd' },
+    { bg: 'rgba(90, 143, 240, 0.20)', border: '#6a9ef0', text: '#93c5fd' },
+    { bg: 'rgba(76, 216, 157, 0.20)', border: '#4cd89d', text: '#6ee7b7' },
+    { bg: 'rgba(240, 96, 112, 0.20)', border: '#f06070', text: '#fda4af' },
+    { bg: 'rgba(240, 168, 64, 0.20)', border: '#f0a840', text: '#fcd34d' },
+    { bg: 'rgba(180, 92, 252, 0.20)', border: '#b46cfc', text: '#d8b4fe' },
+    { bg: 'rgba(76, 216, 232, 0.20)', border: '#4cd8e8', text: '#67e8f9' },
+    { bg: 'rgba(240, 128, 80, 0.20)', border: '#f08050', text: '#fdba74' },
+    { bg: 'rgba(132, 204, 76, 0.20)', border: '#84cc4c', text: '#a3e635' },
+    { bg: 'rgba(232, 92, 228, 0.20)', border: '#e85ce4', text: '#f0abfc' },
+    { bg: 'rgba(92, 112, 240, 0.20)', border: '#5c70f0', text: '#a5b4fc' },
+    { bg: 'rgba(232, 216, 76, 0.20)', border: '#e8d84c', text: '#fde047' },
 ];
 
+const COLORS_LIGHT = [
+    { bg: 'rgba(91, 75, 212, 0.12)', border: '#5b4bd4', text: '#4338ca' },
+    { bg: 'rgba(74, 125, 212, 0.12)', border: '#4a7dd4', text: '#1d4ed8' },
+    { bg: 'rgba(25, 135, 84, 0.12)', border: '#198754', text: '#166534' },
+    { bg: 'rgba(220, 53, 69, 0.10)', border: '#dc3545', text: '#be123c' },
+    { bg: 'rgba(230, 126, 34, 0.10)', border: '#e67e22', text: '#c2410c' },
+    { bg: 'rgba(147, 51, 234, 0.12)', border: '#9333ea', text: '#7e22ce' },
+    { bg: 'rgba(6, 182, 212, 0.12)', border: '#06b6d4', text: '#0e7490' },
+    { bg: 'rgba(234, 88, 12, 0.10)', border: '#ea580c', text: '#c2410c' },
+    { bg: 'rgba(101, 163, 13, 0.12)', border: '#65a30d', text: '#4d7c0f' },
+    { bg: 'rgba(217, 70, 239, 0.12)', border: '#d946ef', text: '#a21caf' },
+    { bg: 'rgba(79, 70, 229, 0.12)', border: '#4f46e5', text: '#4338ca' },
+    { bg: 'rgba(202, 138, 4, 0.12)', border: '#ca8a04', text: '#a16207' },
+];
+
+function getCurrentPalette() {
+    return document.documentElement.dataset.theme === 'light' ? COLORS_LIGHT : COLORS_DARK;
+}
+
 let colorIndex = 0;
-const colorMap = new Map();
+const colorAssignments = new Map(); // codigo -> palette index
 
 export function getColorForDiscipline(codigo) {
-    if (!colorMap.has(codigo)) {
-        colorMap.set(codigo, COLORS[colorIndex % COLORS.length]);
+    if (!colorAssignments.has(codigo)) {
+        colorAssignments.set(codigo, colorIndex % 12);
         colorIndex++;
     }
-    return colorMap.get(codigo);
+    return getCurrentPalette()[colorAssignments.get(codigo)];
 }
 
 export function resetColor(codigo) {
-    colorMap.delete(codigo);
+    colorAssignments.delete(codigo);
 }
 
 export function resetAllColors() {
-    colorMap.clear();
+    colorAssignments.clear();
     colorIndex = 0;
 }
