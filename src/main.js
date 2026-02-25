@@ -2,7 +2,7 @@
  * Main entry point — wires up state, events, and modules.
  */
 import './style.css';
-import { getColorForDiscipline, resetColor, resetAllColors } from './data.js';
+import { getColorForDiscipline, resetColor, resetAllColors, slotKey } from './data.js';
 import { initGrid, renderGrid } from './grid.js';
 import { initSidebar, renderDisciplineList } from './sidebar.js';
 
@@ -21,7 +21,6 @@ function getQuery() {
  * Toggle a turma selection.
  */
 function toggleTurma(discipline, turma) {
-    const key = `${discipline.codigo}-${turma.turma}`;
     const existingIndex = selectedTurmas.findIndex(
         (s) => s.codigo === discipline.codigo && s.turma === turma.turma
     );
@@ -88,6 +87,8 @@ function updateUI() {
     renderDisciplineList(getQuery());
     renderSelectedChips();
     updateSelectedCount();
+    updateInsights();
+    updateFooterTimestamp();
 }
 
 /**
@@ -97,7 +98,13 @@ function renderSelectedChips() {
     const container = document.getElementById('selected-chips');
     container.innerHTML = '';
 
-    if (selectedTurmas.length === 0) return;
+    if (selectedTurmas.length === 0) {
+        const empty = document.createElement('span');
+        empty.className = 'chips-empty';
+        empty.textContent = 'Nenhuma turma selecionada. Use a busca para começar.';
+        container.appendChild(empty);
+        return;
+    }
 
     for (const sel of selectedTurmas) {
         const color = getColorForDiscipline(sel.codigo);
@@ -126,6 +133,46 @@ function updateSelectedCount() {
 }
 
 /**
+ * Compute and render dashboard metrics.
+ */
+function updateInsights() {
+    const metricDisciplines = document.getElementById('metric-disciplines');
+    const metricSlots = document.getElementById('metric-slots');
+    const gridTip = document.getElementById('grid-tip');
+
+    const slotCounts = new Map();
+    let totalSlots = 0;
+
+    for (const sel of selectedTurmas) {
+        for (const horario of sel.horarios) {
+            totalSlots++;
+            const key = slotKey(horario);
+            slotCounts.set(key, (slotCounts.get(key) || 0) + 1);
+        }
+    }
+
+    const conflictSlots = Array.from(slotCounts.values()).filter((count) => count > 1).length;
+
+    metricDisciplines.textContent = String(selectedTurmas.length);
+    metricSlots.textContent = String(totalSlots);
+    gridTip.textContent = conflictSlots > 0
+        ? `Atenção: ${conflictSlots} conflito${conflictSlots === 1 ? '' : 's'} de horário.`
+        : 'Clique em um bloco para remover a turma.';
+}
+
+/**
+ * Update footer timestamp with last interaction time.
+ */
+function updateFooterTimestamp() {
+    const label = document.getElementById('footer-updated');
+    const time = new Intl.DateTimeFormat('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+    }).format(new Date());
+    label.textContent = `Atualizado às ${time}`;
+}
+
+/**
  * Initialize theme toggle.
  */
 function initThemeToggle() {
@@ -140,11 +187,37 @@ function initThemeToggle() {
 }
 
 /**
+ * Keyboard shortcuts:
+ * "/" focuses search, "Esc" clears search when focused.
+ */
+function initKeyboardShortcuts() {
+    window.addEventListener('keydown', (event) => {
+        const searchInput = document.getElementById('search-input');
+        const clearBtn = document.getElementById('btn-clear-search');
+        const activeTag = document.activeElement?.tagName;
+        const isTypingContext = activeTag === 'INPUT' || activeTag === 'TEXTAREA';
+
+        if (event.key === '/' && !isTypingContext) {
+            event.preventDefault();
+            searchInput.focus();
+            return;
+        }
+
+        if (event.key === 'Escape' && document.activeElement === searchInput && searchInput.value) {
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            renderDisciplineList('');
+        }
+    });
+}
+
+/**
  * Initialize the app.
  */
 function init() {
     // Init theme toggle
     initThemeToggle();
+    initKeyboardShortcuts();
 
     // Init grid
     initGrid((codigo, turma) => {
@@ -165,8 +238,7 @@ function init() {
     document.getElementById('btn-clear-all').addEventListener('click', clearAll);
 
     // Initial render
-    renderGrid([]);
-    updateSelectedCount();
+    updateUI();
 }
 
 // Start
