@@ -206,6 +206,21 @@ function updateFooterTimestamp() {
     label.textContent = `Atualizado às ${time}`;
 }
 
+function isDarkReaderActive() {
+    const root = document.documentElement;
+    return root.hasAttribute('data-darkreader-mode')
+        || root.hasAttribute('data-darkreader-scheme')
+        || Boolean(document.querySelector('style#dark-reader-style, style.darkreader'));
+}
+
+function applyDarkReaderThemeGuard() {
+    const current = document.documentElement.dataset.theme || 'dark';
+    if (current !== 'dark' || !isDarkReaderActive()) return false;
+    document.documentElement.dataset.theme = 'light';
+    localStorage.setItem('gradiente-theme', 'light');
+    return true;
+}
+
 /**
  * Initialize theme toggle.
  */
@@ -214,8 +229,9 @@ function initThemeToggle() {
     btn.addEventListener('click', () => {
         const current = document.documentElement.dataset.theme;
         const next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.dataset.theme = next;
-        localStorage.setItem('gradiente-theme', next);
+        const resolvedTheme = next === 'dark' && isDarkReaderActive() ? 'light' : next;
+        document.documentElement.dataset.theme = resolvedTheme;
+        localStorage.setItem('gradiente-theme', resolvedTheme);
         updateUI();
     });
 }
@@ -249,6 +265,8 @@ function initKeyboardShortcuts() {
  * Initialize the app.
  */
 async function init() {
+    applyDarkReaderThemeGuard();
+
     const persistedState = loadAppState();
     const savedCourseId = persistedState?.activeCourseId;
     if (typeof savedCourseId === 'string' && COURSES.some((course) => course.id === savedCourseId)) {

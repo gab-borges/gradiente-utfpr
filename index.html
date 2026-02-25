@@ -12,7 +12,11 @@
     // Apply saved theme before first paint to prevent flash
     const s = localStorage.getItem('gradiente-theme');
     const p = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-    document.documentElement.dataset.theme = s || p;
+    const hasDarkReader = document.documentElement.hasAttribute('data-darkreader-mode')
+      || document.documentElement.hasAttribute('data-darkreader-scheme')
+      || !!document.querySelector('style#dark-reader-style, style.darkreader');
+    const initialTheme = s || p;
+    document.documentElement.dataset.theme = hasDarkReader && initialTheme === 'dark' ? 'light' : initialTheme;
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
