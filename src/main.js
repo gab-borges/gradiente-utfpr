@@ -6,6 +6,7 @@ import {
     COURSES,
     getActiveCourse,
     getColorForDiscipline,
+    loadCourseDisciplines,
     resetColor,
     resetAllColors,
     setActiveCourse,
@@ -257,7 +258,7 @@ function initKeyboardShortcuts() {
 /**
  * Initialize the app.
  */
-function init() {
+async function init() {
     const persistedState = loadAppState();
     const savedCourseId = persistedState?.activeCourseId;
     if (typeof savedCourseId === 'string' && COURSES.some((course) => course.id === savedCourseId)) {
@@ -278,9 +279,10 @@ function init() {
     initSidebar({
         onToggle: toggleTurma,
         getSelected: () => selectedTurmas,
-        onTabChange: () => {
-            // Grid persists — just re-render the sidebar list
+        onTabChange: async () => {
             renderDisciplineList('');
+            await loadCourseDisciplines(getActiveCourse().id);
+            renderDisciplineList(getQuery());
             saveAppState();
         },
         onHover: (discipline, turma) => {
@@ -307,7 +309,14 @@ function init() {
 
     // Initial render
     updateUI();
+
+    // Load active course disciplines from Supabase and refresh the sidebar once ready.
+    await loadCourseDisciplines(getActiveCourse().id);
+    renderDisciplineList(getQuery());
 }
 
 // Start
-init();
+init().catch((error) => {
+    // Keep a visible failure in console without breaking module loading.
+    console.error('Falha ao inicializar o Gradiente:', error);
+});

@@ -10,5 +10,8 @@
     },
     "devDependencies": {
         "vite": "^6.1.0"
+    },
+    "dependencies": {
+        "@vercel/edge-config": "^1.4.3"
     }
 }

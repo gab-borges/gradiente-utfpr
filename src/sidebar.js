@@ -4,6 +4,7 @@
 import {
     COURSES,
     getActiveCourse,
+    getCourseLoadState,
     setActiveCourse,
     searchDisciplines,
     formatTurmaSchedule,
@@ -21,6 +22,24 @@ let activeSidebarKey = null;
 
 function getCourseTabButtons() {
     return Array.from(document.querySelectorAll('#course-tabs .course-tab'));
+}
+
+function syncCourseTabCounts() {
+    const tabs = getCourseTabButtons();
+    for (const tab of tabs) {
+        const courseId = tab.dataset.courseId;
+        const course = COURSES.find((item) => item.id === courseId);
+        const countEl = tab.querySelector('.tab-count');
+        if (!course || !countEl) continue;
+
+        const { status } = getCourseLoadState(courseId);
+        if (status === 'ready') {
+            countEl.textContent = String(course.data.length);
+            continue;
+        }
+
+        countEl.textContent = status === 'error' ? '!' : '…';
+    }
 }
 
 function switchCourseByOffset(offset, { focusTarget = 'none' } = {}) {
@@ -248,7 +267,7 @@ function renderCourseTabs() {
         tab.dataset.courseId = course.id;
         tab.innerHTML = `
       <span class="tab-label">${course.label}</span>
-      <span class="tab-count">${course.data.length}</span>
+      <span class="tab-count">…</span>
     `;
 
         tab.addEventListener('click', () => {
@@ -282,6 +301,8 @@ function renderCourseTabs() {
 
         container.appendChild(tab);
     }
+
+    syncCourseTabCounts();
 }
 
 /**
@@ -289,6 +310,32 @@ function renderCourseTabs() {
  */
 export function renderDisciplineList(query) {
     const container = document.getElementById('discipline-list');
+    const activeCourse = getActiveCourse();
+    const loadState = getCourseLoadState(activeCourse.id);
+    syncCourseTabCounts();
+
+    if (loadState.status === 'idle' || loadState.status === 'loading') {
+        container.innerHTML = `
+      <div class="no-results">
+        <div class="no-results-icon">⏳</div>
+        <div class="no-results-text">Carregando disciplinas...</div>
+      </div>
+    `;
+        activeSidebarKey = null;
+        return;
+    }
+
+    if (loadState.status === 'error') {
+        container.innerHTML = `
+      <div class="no-results">
+        <div class="no-results-icon">⚠️</div>
+        <div class="no-results-text">Falha ao carregar disciplinas do Supabase</div>
+      </div>
+    `;
+        activeSidebarKey = null;
+        return;
+    }
+
     const results = searchDisciplines(query);
     const previousActiveKey = activeSidebarKey;
     sidebarNavMeta.clear();
@@ -319,7 +366,8 @@ export function renderDisciplineList(query) {
         }
 
         // Check if any turma of this discipline is selected
-        const hasSelected = disc.turmas.some((t) =>
+        const turmas = Array.isArray(disc.turmas) ? disc.turmas : [];
+        const hasSelected = turmas.some((t) =>
             selectedKeys.has(`${disc.codigo}-${t.turma}`)
         );
         if (hasSelected) card.classList.add('has-selected');
@@ -351,7 +399,7 @@ export function renderDisciplineList(query) {
         const turmaListEl = document.createElement('div');
         turmaListEl.className = 'turma-list';
 
-        for (const turma of disc.turmas) {
+        for (const turma of turmas) {
             const turmaKey = `${disc.codigo}-${turma.turma}`;
             const isSelected = selectedKeys.has(turmaKey);
             const hasConflict = !isSelected && checkTurmaConflict(turma, disc.codigo);
@@ -363,7 +411,9 @@ export function renderDisciplineList(query) {
             sidebarNavMeta.set(item.dataset.navKey, { type: 'turma', disc, turma });
 
             const scheduleStr = formatTurmaSchedule(turma);
-            const profStr = turma.professores.join(', ') || 'Professor não definido';
+            const profStr = Array.isArray(turma.professores)
+                ? (turma.professores.join(', ') || 'Professor não definido')
+                : 'Professor não definido';
 
             item.innerHTML = `
         <div class="turma-top">
@@ -420,11 +470,13 @@ export function renderDisciplineList(query) {
  */
 function checkTurmaConflict(turma, codigo) {
     const selectedTurmas = getSelectedTurmas();
-    for (const h of turma.horarios) {
+    const horarios = Array.isArray(turma?.horarios) ? turma.horarios : [];
+    for (const h of horarios) {
         const key = slotKey(h);
         for (const sel of selectedTurmas) {
             if (sel.codigo === codigo) continue;
-            for (const sh of sel.horarios) {
+            const selectedHorarios = Array.isArray(sel?.horarios) ? sel.horarios : [];
+            for (const sh of selectedHorarios) {
                 if (slotKey(sh) === key) return true;
             }
         }

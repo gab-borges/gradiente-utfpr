@@ -7,6 +7,7 @@ import os
 import sys
 import json
 import time
+from datetime import datetime, timezone
 
 import requests
 
@@ -20,6 +21,8 @@ COURSE_CONFIG_PATH = os.path.join(
     DATA_DIR,
     "courses.json",
 )
+ENV_PATH = os.path.join(BASE_DIR, ".env")
+SUPABASE_TABLE = "course_disciplines"
 
 BASE_URL = "https://sistemas2.utfpr.edu.br/dpls/sistema/aluno01/mpListaHorario.pcExibirTurmas"
 
@@ -40,15 +43,40 @@ HEADERS = {
 }
 
 
-def load_token():
-    env_path = os.path.join(BASE_DIR, ".env")
-    with open(env_path) as f:
+def load_env_file(path):
+    values = {}
+    if not os.path.exists(path):
+        return values
+
+    with open(path, encoding="utf-8") as f:
         for line in f:
-            line = line.strip()
-            if line.startswith("UTFPRSSO="):
-                return line.split("=", 1)[1]
-    print("ERRO: UTFPRSSO não encontrado no .env")
-    sys.exit(1)
+            raw = line.strip()
+            if not raw or raw.startswith("#") or "=" not in raw:
+                continue
+            key, value = raw.split("=", 1)
+            values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
+
+
+ENV_VALUES = load_env_file(ENV_PATH)
+
+
+def get_env_var(name, required=False):
+    value = os.getenv(name) or ENV_VALUES.get(name)
+    if required and not value:
+        print(f"ERRO: variável {name} não encontrada no ambiente ou no .env")
+        sys.exit(1)
+    return value
+
+
+def load_token():
+    return get_env_var("UTFPRSSO", required=True)
+
+
+def load_supabase_config():
+    url = get_env_var("SUPABASE_URL", required=True)
+    service_role_key = get_env_var("SUPABASE_SERVICE_ROLE_KEY", required=True)
+    return url.rstrip("/"), service_role_key
 
 
 def load_courses_config():
@@ -126,9 +154,39 @@ def parse_html(html_content):
     return parser.disciplines
 
 
+def upsert_course_disciplines(supabase_url, service_role_key, slug, name, disciplines):
+    endpoint = f"{supabase_url}/rest/v1/{SUPABASE_TABLE}?on_conflict=course_id"
+    turmas_count = sum(len(d.get("turmas", [])) for d in disciplines)
+    payload = [
+        {
+            "course_id": slug,
+            "course_label": name,
+            "disciplines": disciplines,
+            "disciplines_count": len(disciplines),
+            "turmas_count": turmas_count,
+            "source": "utfpr",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+    ]
+
+    headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=minimal",
+    }
+
+    response = requests.post(endpoint, headers=headers, json=payload, timeout=60)
+    if not response.ok:
+        raise RuntimeError(
+            f"Falha no upsert do curso {slug} no Supabase (HTTP {response.status_code}): {response.text[:300]}"
+        )
+
+
 def main():
     courses = load_courses_config()
     token = load_token()
+    supabase_url, supabase_service_role_key = load_supabase_config()
     os.makedirs(DATA_DIR, exist_ok=True)
     print(f"Token carregado ({len(token)} chars)")
     print(f"Buscando {len(courses)} cursos...\n")
@@ -148,6 +206,14 @@ def main():
             )
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(disciplines, f, ensure_ascii=False, indent=2)
+
+            upsert_course_disciplines(
+                supabase_url,
+                supabase_service_role_key,
+                slug,
+                name,
+                disciplines,
+            )
 
             print(f"{len(disciplines)} disciplinas, {total_turmas} turmas")
         except requests.RequestException as e:

@@ -29,10 +29,12 @@ Aplicação web para montar grade de horários da UTFPR, com busca de disciplina
 - Design
 - Educação Física
 - Engenharia Mecatrônica
+- Sistemas de Informação
 
 ## Stack
 
 - Frontend: Vite + JavaScript (ES modules)
+- Banco de dados: Supabase Postgres (via REST API)
 - Coleta e parse de dados: Python (`requests` + parser HTML)
 
 ## Requisitos
@@ -41,6 +43,7 @@ Aplicação web para montar grade de horários da UTFPR, com busca de disciplina
 - npm
 - Python 3.10+
 - pacote Python `requests`
+- Projeto Supabase com tabela `public.course_disciplines`
 
 ## Instalação
 
@@ -82,31 +85,61 @@ npm run preview
 │   ├── main.js        # estado global, persistência e orquestração da UI
 │   ├── sidebar.js     # tabs, busca, lista, navegação por teclado
 │   ├── grid.js        # grade semanal, conflitos e preview por hover
-│   ├── data.js        # datasets, busca e utilitários
+│   ├── data.js        # loader Supabase, busca e utilitários
 │   └── style.css      # design system e layout responsivo
 ├── data/
 │   ├── courses.json       # catálogo de cursos (id, label, utfprCode, sampleHtml opcional)
-│   └── disciplinas_*.json # dados gerados/consumidos pelo frontend
+│   └── disciplinas_*.json # snapshots locais (debug/backup)
 ├── scripts/
 │   └── parse_disciplinas.py # parser de HTML local -> JSON
-├── fetch_disciplinas.py   # coleta na UTFPR e gera JSON por curso
+├── fetch_disciplinas.py   # coleta na UTFPR e faz upsert no Supabase
+├── sql/
+│   └── create_course_disciplines.sql # schema + políticas
 ├── media/                 # assets de mídia (logo/screenshot)
 ├── public/                # assets estáticos servidos pelo Vite
 ├── index.html             # shell da aplicação
 └── vite.config.js
 ```
 
-## Dados das disciplinas
+## Dados das disciplinas (Supabase)
 
-O app consome arquivos `data/disciplinas_*.json`.
+O app consome dados da tabela `public.course_disciplines` no Supabase.
 
-### Como adicionar um curso sem mexer no codigo
+### 1) Criar a tabela
+
+No SQL Editor do Supabase, execute:
+
+```sql
+-- cole aqui o conteúdo de:
+-- sql/create_course_disciplines.sql
+```
+
+ou cole o conteúdo de `sql/create_course_disciplines.sql`.
+
+### 2) Variáveis de ambiente
+
+Defina no `.env` da raiz:
+
+```dotenv
+# frontend (lidas no browser via Vite)
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+
+# scripts python (upload no banco)
+SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+
+# coleta UTFPR
+UTFPRSSO=...
+```
+
+### 3) Como adicionar um curso sem mexer no codigo
 
 Edite apenas `data/courses.json` e adicione um item com:
 
-- `id`: identificador usado no nome do JSON (`disciplinas_<id>.json`)
+- `id`: identificador do curso (chave usada em `course_id`)
 - `label`: nome exibido na aba do frontend
-- `utfprCode`: codigo usado na URL da UTFPR
+- `utfprCode`: código usado na URL da UTFPR
 - `sampleHtml` (opcional): nome do HTML local para `scripts/parse_disciplinas.py`
 
 Exemplo:
@@ -120,43 +153,29 @@ Exemplo:
 }
 ```
 
-### Opção 1: Coletar dados atuais da UTFPR
-
-1. Crie um arquivo `.env` na raiz com:
-
-```dotenv
-UTFPRSSO=seu_token_aqui
-```
-
-2. Rode:
+### 4) Popular o banco com dados atuais da UTFPR
 
 ```bash
 python3 fetch_disciplinas.py
 ```
 
-Esse script le `data/courses.json` e gera/atualiza automaticamente:
+Esse script:
 
-- `data/disciplinas_computacao.json`
-- `data/disciplinas_eletrica.json`
-- `data/disciplinas_administracao.json`
-- `data/disciplinas_design.json`
-- `data/disciplinas_edfisica.json`
-- `data/disciplinas_mecatronica.json`
+- lê `data/courses.json`
+- busca e faz parse dos horários da UTFPR
+- faz upsert em `public.course_disciplines` por `course_id`
+- mantém snapshot local em `data/disciplinas_<id>.json`
 
-### Opção 2: Parse de HTML local (amostras)
-
-Se você tiver HTMLs salvos localmente:
+### 5) Parse de HTML local (amostras) + upload opcional
 
 ```bash
 python3 scripts/parse_disciplinas.py
 ```
 
-Esse script le `data/courses.json` e tenta converter:
+Esse script converte `sampleHtml` (ou `disciplinas_<id>.html`) e:
 
-- `sampleHtml` de cada curso (quando definido), ou
-- `disciplinas_<id>.html` (fallback)
-
-Saida: `data/disciplinas_<id>.json` para cada HTML encontrado.
+- sempre gera `data/disciplinas_<id>.json`
+- envia para Supabase quando `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` estiverem definidos
 
 ## Scripts disponíveis
 
@@ -167,5 +186,5 @@ Saida: `data/disciplinas_<id>.json` para cada HTML encontrado.
 ## Observações
 
 - O favicon usa `public/media/gradiente_logo.jpg`.
-- O repositório ignora `data/disciplinas_*.json` e `*.html`; se necessário, gere os arquivos localmente.
+- O repositório ignora `data/disciplinas_*.json` e `*.html`; os snapshots são locais.
 - Não há suíte de testes automatizados no momento.

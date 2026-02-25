@@ -6,12 +6,17 @@ Run: python3 scripts/parse_disciplinas.py
 import json
 import os
 import re
+from datetime import datetime, timezone
 from html.parser import HTMLParser
+
+import requests
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 COURSE_CONFIG_PATH = os.path.join(DATA_DIR, "courses.json")
+ENV_PATH = os.path.join(PROJECT_ROOT, ".env")
+SUPABASE_TABLE = "course_disciplines"
 
 
 class DisciplinaParser(HTMLParser):
@@ -186,6 +191,68 @@ def parse_file(html_path, output_path):
 
     total_turmas = sum(len(d["turmas"]) for d in parser.disciplines)
     print(f"✓ {html_path} -> {output_path}: {len(parser.disciplines)} disciplines, {total_turmas} turmas")
+    return parser.disciplines
+
+
+def load_env_file(path):
+    values = {}
+    if not os.path.exists(path):
+        return values
+
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            raw = line.strip()
+            if not raw or raw.startswith("#") or "=" not in raw:
+                continue
+            key, value = raw.split("=", 1)
+            values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
+
+
+ENV_VALUES = load_env_file(ENV_PATH)
+
+
+def get_env_var(name):
+    return os.getenv(name) or ENV_VALUES.get(name)
+
+
+def load_supabase_config(optional=False):
+    url = get_env_var("SUPABASE_URL")
+    service_role_key = get_env_var("SUPABASE_SERVICE_ROLE_KEY")
+    if optional and (not url or not service_role_key):
+        return None, None
+    if not url or not service_role_key:
+        raise RuntimeError(
+            "Variáveis SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY ausentes no ambiente ou .env."
+        )
+    return url.rstrip("/"), service_role_key
+
+
+def upsert_course_disciplines(supabase_url, service_role_key, slug, label, disciplines):
+    endpoint = f"{supabase_url}/rest/v1/{SUPABASE_TABLE}?on_conflict=course_id"
+    turmas_count = sum(len(d.get("turmas", [])) for d in disciplines)
+    payload = [
+        {
+            "course_id": slug,
+            "course_label": label,
+            "disciplines": disciplines,
+            "disciplines_count": len(disciplines),
+            "turmas_count": turmas_count,
+            "source": "html_sample",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+    ]
+    headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=minimal",
+    }
+    response = requests.post(endpoint, headers=headers, json=payload, timeout=60)
+    if not response.ok:
+        raise RuntimeError(
+            f"Falha no upsert do curso {slug} no Supabase (HTTP {response.status_code}): {response.text[:300]}"
+        )
 
 
 def load_courses_config():
@@ -211,10 +278,16 @@ def main():
     if not courses:
         return
     os.makedirs(DATA_DIR, exist_ok=True)
+    supabase_url, supabase_service_role_key = load_supabase_config(optional=True)
+    if supabase_url and supabase_service_role_key:
+        print("Supabase detectado: resultados também serão enviados para o banco.")
+    else:
+        print("Supabase não configurado: gerando apenas JSON local.")
 
     parsed_any = False
     for course in courses:
         slug = str(course.get("id", "")).strip()
+        label = str(course.get("label", "")).strip() or slug
         if not slug:
             continue
 
@@ -226,7 +299,16 @@ def main():
             print(f"- Pulando {slug}: arquivo HTML nao encontrado ({html_path})")
             continue
 
-        parse_file(html_path, output_path)
+        disciplines = parse_file(html_path, output_path)
+        if supabase_url and supabase_service_role_key:
+            upsert_course_disciplines(
+                supabase_url,
+                supabase_service_role_key,
+                slug,
+                label,
+                disciplines,
+            )
+            print(f"  ↳ Upsert Supabase concluído para {slug}.")
         parsed_any = True
 
     if not parsed_any:
